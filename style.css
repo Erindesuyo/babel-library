@@ -1,0 +1,73 @@
+*{
+    padding:    0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+#experience{
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+}
+
+#experience-canvas{
+    width: 100%;
+    height: 100%;
+}
+
+
+/* 📱 2. 조이스틱 디자인 */
+#joystick-zone {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    touch-action: none; /* 모바일에서 화면 스크롤되는 현상 방지 */
+    z-index: 100; /* 캔버스 위로 올라오도록 설정 */
+}
+
+#joystick-knob {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none; /* 터치 이벤트가 부모(zone)에게만 가도록 설정 */
+}
+
+#book-popup {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px; /* 조금 더 넓게 */
+    height: 500px;
+    background: rgba(255, 255, 255, 0.95); /* 종이 질감 느낌 */
+    color: #333;
+    padding: 30px;
+    border: 1px solid #ccc;
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 1.6;
+    overflow: hidden; /* 한 페이지만 보이도록 */
+    z-index: 1000;
+    pointer-events: auto; /* 중요: 팝업이 마우스를 가로막지 않게 함 */
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    display: none;
+    word-break: break-all; 
+    overflow-y: auto; 
+    padding: 40px; 
+    box-sizing: border-box;
+}
+
+#popup-content {
+    pointer-events: none; /* 텍스트 자체는 마우스 이벤트를 무시하게 하여 방해 방지 */
+}

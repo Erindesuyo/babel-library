@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" >
+</head>
+<body>
+
+    <div id="experience">
+        <canvas id="experience-canvas"></canvas>
+    </div>
+    <div id="joystick-zone">
+        <div id="joystick-knob"></div>
+    </div>
+    <div id="book-popup" style="display: none;">
+        <div id="popup-content"></div>
+        <button id="close-btn">close</button>
+    </div>
+    
+    <script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+  }
+}
+</script>
+    <script src="app.js" type="module" defer></script>
+</body>
+</html>
