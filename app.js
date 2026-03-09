@@ -26,18 +26,15 @@ function generateBabelText(length) {
     return result;
 }
 
-// --- [수정] 클릭 및 터치 통합 핸들러 함수 ---
+// --- [완벽 수정] PC & 모바일 통합 터치/클릭 핸들러 ---
 function handleSelection(event) {
-    // 터치 이벤트인 경우 touches[0]에서 좌표를 가져오고, 마우스인 경우 일반 좌표 사용
-    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
-    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+    // 🌟 핵심 1: 사용자가 3D 화면(canvas)을 터치한 게 아니라면 무시!
+    // (이렇게 하면 조이스틱을 움직이거나 닫기 버튼을 누를 때 책이 눌리는 걸 완벽히 막아줍니다)
+    if (event.target !== canvas) return;
 
-    // [중요] 닫기 버튼(close-btn) 클릭 시 무시
-    if (event.target === closeBtn) return;
-
-    // 마우스/터치 좌표 정규화
-    mouse.x = (clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+    // 🌟 핵심 2: PointerEvent는 마우스든 터치든 상관없이 clientX, clientY를 바로 줍니다. (복잡한 touches 배열 계산 삭제!)
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
     selectionRaycaster.setFromCamera(mouse, camera);
     
@@ -47,7 +44,7 @@ function handleSelection(event) {
     if (intersects.length > 0) {
         const target = intersects[0].object;
         
-        // 이름 확인 (소문자로 변환하여 비교하면 더 안전합니다)
+        // 이름 확인 (소문자 변환)
         const objName = target.name.toLowerCase();
         if (objName.includes("book")) {
             console.log("선택된 오브젝트:", target.name);
@@ -57,6 +54,17 @@ function handleSelection(event) {
         }
     }
 }
+
+// 기존의 window.addEventListener('click', ...) 과 'touchstart' 를 싹 다 지우고
+// 🌟 마우스 클릭과 모바일 터치를 하나로 통합하는 'pointerup'으로 묶어줍니다!
+window.addEventListener('pointerup', handleSelection);
+
+// --- 닫기 버튼 리스너 (그대로 유지) ---
+closeBtn.onclick = (event) => {
+    event.stopPropagation(); 
+    popup.style.display = 'none';
+};
+
 
 // PC 클릭 이벤트
 window.addEventListener('click', handleSelection);
