@@ -26,33 +26,46 @@ function generateBabelText(length) {
     return result;
 }
 
-// --- 클릭 이벤트 리스너 수정 ---
-window.addEventListener('click', (event) => {
-    // [중요] 클릭한 요소가 닫기 버튼(close-btn)이라면 책장 감지 로직을 실행하지 않음
+// --- [수정] 클릭 및 터치 통합 핸들러 함수 ---
+function handleSelection(event) {
+    // 터치 이벤트인 경우 touches[0]에서 좌표를 가져오고, 마우스인 경우 일반 좌표 사용
+    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+
+    // [중요] 닫기 버튼(close-btn) 클릭 시 무시
     if (event.target === closeBtn) return;
 
-    // 마우스 좌표를 -1 ~ 1 사이로 정규화
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    // 마우스/터치 좌표 정규화
+    mouse.x = (clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
 
     selectionRaycaster.setFromCamera(mouse, camera);
     
-    // scene.children 중에서 책 오브젝트들을 검사
+    // scene.children 검사
     const intersects = selectionRaycaster.intersectObjects(scene.children, true);
 
     if (intersects.length > 0) {
         const target = intersects[0].object;
         
-        // 블렌더에서 설정한 이름("책" 또는 "책2")이 포함되어 있는지 확인
-        if (target.name.includes("book") || target.name.includes("book.001")) {
+        // 이름 확인 (소문자로 변환하여 비교하면 더 안전합니다)
+        const objName = target.name.toLowerCase();
+        if (objName.includes("book")) {
             console.log("선택된 오브젝트:", target.name);
 
-            // 랜덤 텍스트를 생성해서 팝업에 노출
             popupContent.innerText = generateBabelText(500);
             popup.style.display = 'block';
         }
     }
-});
+}
+
+// PC 클릭 이벤트
+window.addEventListener('click', handleSelection);
+
+// 모바일 터치 이벤트 추가
+window.addEventListener('touchstart', (e) => {
+    // 스크롤 등 기본 동작 방해를 피하려면 조건부로 preventDefault 사용 가능
+    handleSelection(e);
+}, { passive: false });
 
 // --- 닫기 버튼 리스너 수정 ---
 closeBtn.onclick = (event) => {
@@ -225,7 +238,7 @@ window.addEventListener("resize", () => {
 
 // 5. 이동 및 🛡️ 물리 로직
 const raycaster = new THREE.Raycaster();
-const speed = 0.008; 
+const speed = 0.02; 
 const collisionDistance = 0.1; 
 
 function animate() {
