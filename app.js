@@ -317,3 +317,52 @@ function animate() {
     requestAnimationFrame(animate); 
 }
 animate();
+
+
+
+
+// --- 🔍 바벨의 도서관 검색 시스템 로직 ---
+const searchOverlay = document.getElementById('search-overlay');
+const searchInput = document.getElementById('search-input');
+const searchBtn = document.getElementById('search-btn');
+const searchResult = document.getElementById('search-result');
+const enterLibraryBtn = document.getElementById('enter-library-btn');
+
+function performSearch() {
+    const query = searchInput.value.trim();
+    if (!query) {
+        searchResult.innerText = "질문을 입력해야 도서관을 뒤질 수 있습니다.";
+        return;
+    }
+
+    // 1. 방 번호: 무한한 느낌을 주는 6자리 무작위 영문+숫자 조합 (예: 4A9F2B)
+    const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let roomHex = "";
+    for(let i = 0; i < 6; i++) {
+        roomHex += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    // 2. 책장, 열, 번호 랜덤 생성 (요청하신 제약 조건 적용!)
+    const bookshelf = Math.floor(Math.random() * 4) + 1; // 1~4번째 책장
+    const shelfRow = Math.floor(Math.random() * 5) + 1;  // 1~5열
+    const bookPosition = Math.floor(Math.random() * 32) + 1; // 1~32번
+
+    // 3. 결과 텍스트 출력
+    searchResult.innerHTML = `"${query}"에 대한 해답은<br><br><span style="color:#ffaa55; font-size: 1.2rem; font-weight:bold;">${roomHex}번 방, ${bookshelf}번째 책장,<br>${shelfRow}열, ${bookPosition}번</span><br><br>책에 존재합니다.`;
+    
+    // 4. 검색 버튼을 숨기고 3D 화면으로 들어가는 버튼 표시
+    searchBtn.style.display = 'none';
+    searchInput.style.display = 'none'; // 입력창도 깔끔하게 숨기기
+    enterLibraryBtn.style.display = 'inline-block';
+}
+
+// 클릭 및 엔터키 이벤트 연결
+searchBtn.addEventListener('click', performSearch);
+searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') performSearch();
+});
+
+// '도서관 진입하기' 버튼을 누르면 인트로 화면을 끄고 3D 화면 노출!
+enterLibraryBtn.addEventListener('click', () => {
+    searchOverlay.style.display = 'none'; 
+});
