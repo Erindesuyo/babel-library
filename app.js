@@ -16,14 +16,21 @@ const closeBtn = document.getElementById('close-btn');
 const mouse = new THREE.Vector2();
 const selectionRaycaster = new THREE.Raycaster();
 
-// --- 랜덤 텍스트 생성 함수 ---
-function generateBabelText(length) {
+function generateBabelText() {
     const characters = "abcdefghijklmnopqrstuvwxyz, .";
-    let result = "";
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    let fullPage = "";
+    
+    // 원작 설정: 40행
+    for (let line = 0; line < 40; line++) {
+        let lineText = "";
+        // 원작 설정: 각 행 80자
+        for (let char = 0; char < 80; char++) {
+            lineText += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        // 행 끝에 줄바꿈 추가 (마지막 줄 제외)
+        fullPage += lineText + (line < 39 ? "\n" : ""); 
     }
-    return result;
+    return fullPage;
 }
 
 // --- [완벽 수정] PC & 모바일 통합 터치/클릭 핸들러 ---
