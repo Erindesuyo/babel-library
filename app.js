@@ -348,7 +348,7 @@ function performSearch() {
     const bookPosition = Math.floor(Math.random() * 32) + 1; // 1~32번
 
     // 3. 결과 텍스트 출력
-    searchResult.innerHTML = `"${query}"에 대한 해답은<br><br><span style="color:#ffaa55; font-size: 1.2rem; font-weight:bold;">${roomHex}번 방, ${bookshelf}번째 책장,<br>${shelfRow}열, ${bookPosition}번</span><br><br>책에 존재합니다.`;
+    searchResult.innerHTML = `"${query}"<br><br><span style="color:#ffaa55; font-size: 1.2rem; font-weight:bold;">Room No.${roomHex}, Bookshelf No.${bookshelf},<br> Row ${shelfRow}, Book No.${bookPosition}</span><br><br>`;
     
     // 4. 검색 버튼을 숨기고 3D 화면으로 들어가는 버튼 표시
     searchBtn.style.display = 'none';
