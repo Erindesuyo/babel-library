@@ -82,6 +82,17 @@
     text-align: left;    /* pre 사용 시 justify는 의미 없음 */
     pointer-events: none;
     padding-right: 0;    
+    margin-bottom: 15px;     /* 텍스트와 페이지 번호 사이 간격 살짝 줄임 */
+    flex-grow: 1;
+}
+
+#page-number {
+    text-align: center;      /* 가운데 정렬 */
+    font-family: 'Courier New', Courier, monospace; /* 본문과 동일한 폰트 */
+    font-size: 12px;         /* 적당한 크기 */
+    color: #666;             /* 약간 흐릿한 회색으로 페이지 느낌 강조 */
+    margin-bottom: 25px;     /* 🌟 버튼과의 간격 확보 (요청하신 빨간 원 위치) */
+    flex-shrink: 0;          /* 크기 고정 */
 }
 
 #close-btn {
@@ -95,4 +106,5 @@
     font-family: sans-serif;
     text-transform: uppercase;
     letter-spacing: 1px;
+    margin-bottom: 0;
 }
