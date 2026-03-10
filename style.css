@@ -81,7 +81,7 @@
     margin-bottom: 20px; /* 버튼과의 간격만 유지 */
     text-align: left;    /* pre 사용 시 justify는 의미 없음 */
     pointer-events: none;
-    padding-right: 0;    
+    padding-right: 50px;    
 }
 
 #close-btn {
