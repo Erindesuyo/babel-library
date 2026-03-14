@@ -18,6 +18,17 @@
     height: 100%;
 }
 
+#joystick-zone {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 150px;  /* nipple 크기보다 조금 더 여유 있게 */
+    height: 150px;
+    touch-action: none; 
+    z-index: 100;
+}
+
 
 
 #book-popup {
