@@ -2,14 +2,11 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-// 1. 기본 설정 (Scene, Renderer)
 const scene = new THREE.Scene();
 const canvas = document.getElementById("experience-canvas");
 const sizes = { width: window.innerWidth, height: window.innerHeight };
 
-
-
-// --- 책 페이지  ---
+// page of books
 const popup = document.getElementById('book-popup');
 const popupContent = document.getElementById('popup-content');
 const closeBtn = document.getElementById('close-btn');
@@ -19,110 +16,63 @@ const selectionRaycaster = new THREE.Raycaster();
 function generateBabelText() {
     const characters = "abcdefghijklmnopqrstuvwxyz, .";
     let fullPage = "";
-    
-    // 원작 설정: 40행
     for (let line = 0; line < 40; line++) {
         let lineText = "";
-        // 원작 설정: 각 행 80자
         for (let char = 0; char < 80; char++) {
             lineText += characters.charAt(Math.floor(Math.random() * characters.length));
         }
-        // 행 끝에 줄바꿈 추가 (마지막 줄 제외)
         fullPage += lineText + (line < 39 ? "\n" : ""); 
     }
     return fullPage;
 }
 
-// --- [완벽 수정] PC & 모바일 통합 터치/클릭 핸들러 ---
+
 function handleSelection(event) {
-    // 🌟 핵심 1: 사용자가 3D 화면(canvas)을 터치한 게 아니라면 무시!
-    // (이렇게 하면 조이스틱을 움직이거나 닫기 버튼을 누를 때 책이 눌리는 걸 완벽히 막아줍니다)
     if (event.target !== canvas) return;
 
-    // 🌟 핵심 2: PointerEvent는 마우스든 터치든 상관없이 clientX, clientY를 바로 줍니다. (복잡한 touches 배열 계산 삭제!)
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
     selectionRaycaster.setFromCamera(mouse, camera);
-    
-    // scene.children 검사
     const intersects = selectionRaycaster.intersectObjects(scene.children, true);
 
     if (intersects.length > 0) {
         const target = intersects[0].object;
-        
-        // 이름 확인 (소문자 변환)
         const objName = target.name.toLowerCase();
         if (objName.includes("book")) {
-            console.log("선택된 오브젝트:", target.name);
-
-            popupContent.innerText = generateBabelText(500);
+            popupContent.innerText = generateBabelText();
             popup.style.display = 'block';
         }
     }
 }
 
-// 기존의 window.addEventListener('click', ...) 과 'touchstart' 를 싹 다 지우고
-// 🌟 마우스 클릭과 모바일 터치를 하나로 통합하는 'pointerup'으로 묶어줍니다!
 window.addEventListener('pointerup', handleSelection);
-
-// --- 닫기 버튼 리스너 (그대로 유지) ---
 closeBtn.onclick = (event) => {
     event.stopPropagation(); 
     popup.style.display = 'none';
 };
-
-
-// PC 클릭 이벤트
-window.addEventListener('click', handleSelection);
-
-// 모바일 터치 이벤트 추가
-window.addEventListener('touchstart', (e) => {
-    // 스크롤 등 기본 동작 방해를 피하려면 조건부로 preventDefault 사용 가능
-    handleSelection(e);
-}, { passive: false });
-
-// --- 닫기 버튼 리스너 수정 ---
-closeBtn.onclick = (event) => {
-    // 클릭 이벤트가 뒷배경(window)으로 퍼지는 것을 방지
-    event.stopPropagation(); 
-    popup.style.display = 'none';
-};
-
-
-
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-// 🌟 그림자 활성화 및 부드러운 그림자 설정
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-// 🌫️ 심연의 안개 세팅
 const darkColor = 0x050508;
 scene.background = new THREE.Color(darkColor);
 scene.fog = new THREE.Fog(darkColor, 1.5, 7);
 
-// 🌙 전체 조명은 아주 어둡게!
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
 scene.add(ambientLight);
 
-// 🎥 카메라 설정 (🌟 손전등을 달기 위해 위로 끌어올렸어!)
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 1000);
 camera.position.set(0.5, 0.3, 0.5); 
 
-// 🔦 내 카메라에 달린 손전등! (이제 카메라가 먼저 생겼으니 에러 안 남!)
-const lanternLight = new THREE.PointLight(0xffaa55, 0.4, 6); // 주황빛 
-lanternLight.castShadow = true; // 그림자 쏴랏!
-lanternLight.position.set(0, 0, 0); 
-lanternLight.shadow.mapSize.width = 600;
-lanternLight.shadow.mapSize.height = 600;
-camera.add(lanternLight); // 씬이 아니라 카메라에 추가!
+const lanternLight = new THREE.PointLight(0xffaa55, 0.4, 6); 
+lanternLight.castShadow = true; 
+camera.add(lanternLight); 
 scene.add(camera); 
 
-// 컨트롤 설정
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.enablePan = false; 
@@ -131,7 +81,7 @@ controls.target.copy(camera.position).add(new THREE.Vector3(0, 0, -0.01));
 controls.maxPolarAngle = Math.PI / 1.1; 
 controls.minPolarAngle = Math.PI / 5;   
 
-// 2. 모델 로드 및 장애물, 🕳️ 투명 기둥 세팅
+
 const loader = new GLTFLoader();
 const obstacles = []; 
 let roomSpacingX = 0; 
@@ -150,45 +100,28 @@ loader.load("./babel_final.glb", function(glb) {
     const holeGeometry = new THREE.CylinderGeometry(holeRadius, holeRadius, floorHeight, 16);
     const holeMaterial = new THREE.MeshBasicMaterial({ visible: false }); 
 
-    // 1차원 일렬 복도 코드로 완벽 세팅
     for (let floor = -3; floor <= 3; floor++) {     
         for (let i = -3; i <= 3; i++) {             
-            
             const clone = roomModel.clone();
-            clone.rotation.y = 0; 
-            
             const x = i * roomSpacingX;
             const y = floor * floorHeight;
             const z = 0; 
-            
             clone.position.set(x, y, z);
             scene.add(clone);
 
-            // 🧱 모델 내부의 벽/펜스 장애물 등록 & 💡 그림자/조명 처리
             clone.traverse((child) => {
-                
-                // 🛑 수백 개로 복사되어 화면을 하얗게 터뜨린 블렌더 조명 끄기
-                if (child.isLight) {
-                    child.intensity = 0; 
-                    child.castShadow = false;
-                }
-
+                if (child.isLight) { child.intensity = 0; }
                 if (child.isMesh) {
                     const meshName = child.name.toLowerCase();
-                    
-                    // 🌟 모든 책장과 펜스가 그림자를 만들도록 허락!
                     child.castShadow = true;    
                     child.receiveShadow = true; 
-
-                    const isObstacle = targetNames.some(target => meshName.includes(target));
-                    if (isObstacle) {
+                    if (targetNames.some(target => meshName.includes(target))) {
                         child.material.side = THREE.DoubleSide; 
                         obstacles.push(child);
                     }
                 }
             });
 
-            // 🕳️ 2. 방 중앙마다 투명 기둥 세우기
             const holeBlocker = new THREE.Mesh(holeGeometry, holeMaterial);
             holeBlocker.position.set(x, y + (floorHeight / 2), z);
             scene.add(holeBlocker);
@@ -197,51 +130,31 @@ loader.load("./babel_final.glb", function(glb) {
     }
 });
 
-// 4. 입력 감지 (키보드 & 조이스틱)
+// 조이스틱
 const keys = { w: false, a: false, s: false, d: false };
-window.addEventListener('keydown', (e) => {
-    if(e.key === 'w') keys.w = true;
-    if(e.key === 'a') keys.a = true;
-    if(e.key === 's') keys.s = true;
-    if(e.key === 'd') keys.d = true;
-});
-window.addEventListener('keyup', (e) => {
-    if(e.key === 'w') keys.w = false;
-    if(e.key === 'a') keys.a = false;
-    if(e.key === 's') keys.s = false;
-    if(e.key === 'd') keys.d = false;
-});
+window.addEventListener('keydown', (e) => { keys[e.key] = true; });
+window.addEventListener('keyup', (e) => { keys[e.key] = false; });
 
+let joystickVector = { x: 0, y: 0 };
 const joystickZone = document.getElementById('joystick-zone');
-const joystickKnob = document.getElementById('joystick-knob');
-let isDragging = false;
-let joystickVector = { x: 0, y: 0 }; 
-const maxRadius = 50; 
 
-joystickZone.addEventListener('touchstart', (e) => { isDragging = true; updateJoystick(e.touches[0]); });
-joystickZone.addEventListener('touchmove', (e) => { if (isDragging) updateJoystick(e.touches[0]); });
-joystickZone.addEventListener('touchend', () => {
-    isDragging = false;
-    joystickVector = { x: 0, y: 0 };
-    joystickKnob.style.transform = `translate(-50%, -50%)`;
+const manager = nipplejs.create({
+    zone: joystickZone,
+    mode: 'static',
+    position: { left: '50%', top: '50%' },
+    color: '#ffaa55',
+    size: 100
 });
 
-function updateJoystick(touch) {
-    const rect = joystickZone.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    let dx = touch.clientX - centerX;
-    let dy = touch.clientY - centerY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+manager.on('move', (evt, data) => {
+    joystickVector.x = data.vector.x;
+    joystickVector.y = data.vector.y; 
+});
 
-    if (distance > maxRadius) {
-        dx = (dx / distance) * maxRadius;
-        dy = (dy / distance) * maxRadius;
-    }
-    joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-    joystickVector.x = dx / maxRadius;
-    joystickVector.y = -dy / maxRadius; 
-}
+manager.on('end', () => {
+    joystickVector.x = 0;
+    joystickVector.y = 0;
+});
 
 window.addEventListener("resize", () => {
     sizes.width = window.innerWidth;
@@ -251,9 +164,9 @@ window.addEventListener("resize", () => {
     renderer.setSize(sizes.width, sizes.height);
 });
 
-// 5. 이동 및 🛡️ 물리 로직
+
 const raycaster = new THREE.Raycaster();
-const speed = 0.02; 
+const speed = 0.02; // 이동 속도 컴에선 빠른데 모바일에선 느림.. 0.02가 딱인듯?
 const collisionDistance = 0.1; 
 
 function animate() {
@@ -270,12 +183,12 @@ function animate() {
     if (keys.d) moveDir.add(right);
     if (keys.a) moveDir.sub(right);
 
+
     if (joystickVector.y !== 0) moveDir.addScaledVector(forward, joystickVector.y);
     if (joystickVector.x !== 0) moveDir.addScaledVector(right, joystickVector.x);
 
     if (moveDir.lengthSq() > 0) {
         moveDir.normalize();
-        
         const rayOrigins = [
             camera.position.clone(),                                  
             camera.position.clone().setY(camera.position.y - 0.15),   
@@ -283,11 +196,9 @@ function animate() {
         ];
 
         let canMove = true;
-
         for (const origin of rayOrigins) {
             raycaster.set(origin, moveDir);
             const intersects = raycaster.intersectObjects(obstacles, false);
-
             if (intersects.length > 0 && intersects[0].distance < collisionDistance) {
                 canMove = false;
                 break; 
@@ -300,7 +211,7 @@ function animate() {
         }
     }
 
-    // 🌌 1차원(앞뒤) 복도용 무한 루프 텔레포트 코드
+// 무한 텔레포트 treadmilll
     if (roomSpacingX > 0) {
         if (camera.position.x > roomSpacingX / 2) {
             camera.position.x -= roomSpacingX;
@@ -319,9 +230,6 @@ function animate() {
 animate();
 
 
-
-
-// --- 🔍 바벨의 도서관 검색 시스템 로직 ---
 const searchOverlay = document.getElementById('search-overlay');
 const searchInput = document.getElementById('search-input');
 const searchBtn = document.getElementById('search-btn');
@@ -330,39 +238,17 @@ const enterLibraryBtn = document.getElementById('enter-library-btn');
 
 function performSearch() {
     const query = searchInput.value.trim();
-    if (!query) {
-        searchResult.innerText = "질문을 입력해야 도서관을 뒤질 수 있습니다.";
-        return;
-    }
-
-    // 1. 방 번호: 무한한 느낌을 주는 6자리 무작위 영문+숫자 조합 (예: 4A9F2B)
+    if (!query) return;
     const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let roomHex = "";
-    for(let i = 0; i < 6; i++) {
-        roomHex += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    // 2. 책장, 열, 번호 랜덤 생성 (요청하신 제약 조건 적용!)
-    const bookshelf = Math.floor(Math.random() * 4) + 1; // 1~4번째 책장
-    const shelfRow = Math.floor(Math.random() * 5) + 1;  // 1~5열
-    const bookPosition = Math.floor(Math.random() * 32) + 1; // 1~32번
-
-    // 3. 결과 텍스트 출력
-    searchResult.innerHTML = `"${query}"<br><br><span style="color:#ffaa55; font-size: 1.2rem; font-weight:bold;">Room No.${roomHex}, Bookshelf No.${bookshelf},<br> Row ${shelfRow}, Book No.${bookPosition}</span><br><br>`;
+    for(let i = 0; i < 6; i++) roomHex += chars.charAt(Math.floor(Math.random() * chars.length));
     
-    // 4. 검색 버튼을 숨기고 3D 화면으로 들어가는 버튼 표시
+    searchResult.innerHTML = `"${query}"<br><br><span style="color:#ffaa55; font-size: 1.2rem; font-weight:bold;">Room No.${roomHex}, Bookshelf No.${Math.floor(Math.random() * 4) + 1},<br> Row ${Math.floor(Math.random() * 5) + 1}, Book No.${Math.floor(Math.random() * 32) + 1}</span><br><br>`;
+    
     searchBtn.style.display = 'none';
-    searchInput.style.display = 'none'; // 입력창도 깔끔하게 숨기기
+    searchInput.style.display = 'none';
     enterLibraryBtn.style.display = 'inline-block';
 }
 
-// 클릭 및 엔터키 이벤트 연결
 searchBtn.addEventListener('click', performSearch);
-searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') performSearch();
-});
-
-// '도서관 진입하기' 버튼을 누르면 인트로 화면을 끄고 3D 화면 노출!
-enterLibraryBtn.addEventListener('click', () => {
-    searchOverlay.style.display = 'none'; 
-});
+enterLibraryBtn.addEventListener('click', () => { searchOverlay.style.display = 'none'; });
