@@ -70,7 +70,7 @@ function handleSelection(event) {
             popupContent.innerText = getBookContent(); 
             popup.style.display = 'block';
             
-            // 유서일 경우 빨간색 느낌을 주어 강조 (선택 사항)
+            
             if (popupContent.innerText.includes("[ FRAGMENT FOUND ]")) {
                 popupContent.style.color = "#8b0000"; // 진한 피색
             } else {
