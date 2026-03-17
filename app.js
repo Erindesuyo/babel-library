@@ -13,6 +13,32 @@ const closeBtn = document.getElementById('close-btn');
 const mouse = new THREE.Vector2();
 const selectionRaycaster = new THREE.Raycaster();
 
+const suicideNotes = [
+    "I have been walking for 40 years. There is no end.",
+    "The letters... they mean nothing. It's all just noise.",
+    "If you find this, do not look for the exit. There is none.",
+    "I found a book with my name in it, but the pages were blank.",
+    "The silence is louder than the sound of my footsteps.",
+    "Everything that can be written has already been written.",
+    "I am the 4th librarian of this sector. I am leaving now. Into the void.",
+    "God is a librarian who went mad long ago.",
+    "Stop searching. The truth is as random as these letters.",
+    "I see the same hallway again. Or is it just a twin?"
+];
+
+// fragment + text
+function getBookContent() {
+    const isSuicideNote = Math.random() < 0.5; // 50%
+
+    if (isSuicideNote) {
+        const randomNote = suicideNotes[Math.floor(Math.random() * suicideNotes.length)];
+        return `\n\n\n\n   [ FRAGMENT FOUND ]\n\n   "${randomNote}"\n\n\n\n` + generateBabelText().substring(0, 1000);
+    } else {
+        return generateBabelText();
+    }
+}
+
+
 function generateBabelText() {
     const characters = "abcdefghijklmnopqrstuvwxyz, .";
     let fullPage = "";
@@ -40,11 +66,20 @@ function handleSelection(event) {
         const target = intersects[0].object;
         const objName = target.name.toLowerCase();
         if (objName.includes("book")) {
-            popupContent.innerText = generateBabelText();
+            
+            popupContent.innerText = getBookContent(); 
             popup.style.display = 'block';
+            
+            // 유서일 경우 빨간색 느낌을 주어 강조 (선택 사항)
+            if (popupContent.innerText.includes("[ FRAGMENT FOUND ]")) {
+                popupContent.style.color = "#8b0000"; // 진한 피색
+            } else {
+                popupContent.style.color = "#000";
+            }
         }
     }
 }
+
 
 window.addEventListener('pointerup', handleSelection);
 closeBtn.onclick = (event) => {
