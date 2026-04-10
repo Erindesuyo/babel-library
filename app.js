@@ -2,17 +2,24 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+// 1. 기본 설정 (Scene, Renderer)
 const scene = new THREE.Scene();
 const canvas = document.getElementById("experience-canvas");
 const sizes = { width: window.innerWidth, height: window.innerHeight };
 
-// page of books
+// --- 책 페이지  ---
 const popup = document.getElementById('book-popup');
 const popupContent = document.getElementById('popup-content');
 const closeBtn = document.getElementById('close-btn');
 const mouse = new THREE.Vector2();
 const selectionRaycaster = new THREE.Raycaster();
 
+// --- 시체 관련 변수 ---
+let corpseModel = null;
+const clickableCorpses = []; 
+const corpseLoader = new GLTFLoader();
+
+// --- 📄 유서 내용 데이터베이스 ---
 const suicideNotes = [
     "I have been walking for 40 years. There is no end.",
     "The letters... they mean nothing. It's all just noise.",
@@ -26,9 +33,9 @@ const suicideNotes = [
     "I see the same hallway again. Or is it just a twin?"
 ];
 
-// fragment + text
+// --- 유서 또는 랜덤 텍스트 선택 함수 ---
 function getBookContent() {
-    const isSuicideNote = Math.random() < 0.5; // 50%
+    const isSuicideNote = Math.random() < 0.5; 
 
     if (isSuicideNote) {
         const randomNote = suicideNotes[Math.floor(Math.random() * suicideNotes.length)];
@@ -38,7 +45,7 @@ function getBookContent() {
     }
 }
 
-
+// --- 원작 고증: 랜덤 텍스트 생성 ---
 function generateBabelText() {
     const characters = "abcdefghijklmnopqrstuvwxyz, .";
     let fullPage = "";
@@ -52,7 +59,7 @@ function generateBabelText() {
     return fullPage;
 }
 
-
+// --- 🖱️ 클릭 핸들러 (🌟 수정된 부분) ---
 function handleSelection(event) {
     if (event.target !== canvas) return;
 
@@ -64,15 +71,29 @@ function handleSelection(event) {
 
     if (intersects.length > 0) {
         const target = intersects[0].object;
-        const objName = target.name.toLowerCase();
-        if (objName.includes("book")) {
+        const objName = target.name ? target.name.toLowerCase() : "";
+
+        // 💀 시체 클릭 시 이동 여부 묻기!
+        if (objName.includes("corpse") || (target.parent && target.parent.name && target.parent.name.toLowerCase().includes("corpse"))) {
             
+            // 🌟 팝업창을 띄워 사용자에게 묻습니다.
+            const wantsToMove = confirm("Would you like to go to the document?");
+            
+            // 사용자가 '예(확인)'를 눌렀을 때만 이동합니다.
+            if (wantsToMove) {
+                // 👇 여기에 이동하고자 하는 프로세스 웹사이트 주소를 적어주세요!
+                window.location.href = "https://erindesuyo.github.io/documents/"; 
+            }
+            
+            return; // 팝업창 결과와 상관없이 책 검사는 하지 않고 종료
+        }
+
+        if (objName.includes("book")) {
             popupContent.innerText = getBookContent(); 
             popup.style.display = 'block';
             
-            
             if (popupContent.innerText.includes("[ FRAGMENT FOUND ]")) {
-                popupContent.style.color = "#8b0000"; // 진한 피색
+                popupContent.style.color = "#8b0000"; 
             } else {
                 popupContent.style.color = "#000";
             }
@@ -80,13 +101,15 @@ function handleSelection(event) {
     }
 }
 
-
 window.addEventListener('pointerup', handleSelection);
 closeBtn.onclick = (event) => {
     event.stopPropagation(); 
     popup.style.display = 'none';
 };
 
+// ------------------------------------------
+// 화면 및 조명 세팅
+// ------------------------------------------
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -116,56 +139,79 @@ controls.target.copy(camera.position).add(new THREE.Vector3(0, 0, -0.01));
 controls.maxPolarAngle = Math.PI / 1.1; 
 controls.minPolarAngle = Math.PI / 5;   
 
-
+// ------------------------------------------
+// 모델 로드 및 장애물 세팅
+// ------------------------------------------
 const loader = new GLTFLoader();
 const obstacles = []; 
 let roomSpacingX = 0; 
 const targetNames = ['기본', 'fence', 'hall', 'stair', 'stair step', '기둥','cube'];
 
-loader.load("./babel_final.glb", function(glb) {
-    const roomModel = glb.scene;
-    const box = new THREE.Box3().setFromObject(roomModel);
-    const size = box.getSize(new THREE.Vector3());
+corpseLoader.load("./corpse.glb", function(corpseGlb) {
+    corpseModel = corpseGlb.scene;
     
-    const floorHeight = size.y * 0.95; 
-    const gapTweak = 0.98; 
-    roomSpacingX = size.x * gapTweak; 
-    
-    const holeRadius = size.x * 0.1; 
-    const holeGeometry = new THREE.CylinderGeometry(holeRadius, holeRadius, floorHeight, 16);
-    const holeMaterial = new THREE.MeshBasicMaterial({ visible: false }); 
-
-    for (let floor = -3; floor <= 3; floor++) {     
-        for (let i = -3; i <= 3; i++) {             
-            const clone = roomModel.clone();
-            const x = i * roomSpacingX;
-            const y = floor * floorHeight;
-            const z = 0; 
-            clone.position.set(x, y, z);
-            scene.add(clone);
-
-            clone.traverse((child) => {
-                if (child.isLight) { child.intensity = 0; }
-                if (child.isMesh) {
-                    const meshName = child.name.toLowerCase();
-                    child.castShadow = true;    
-                    child.receiveShadow = true; 
-                    if (targetNames.some(target => meshName.includes(target))) {
-                        child.material.side = THREE.DoubleSide; 
-                        obstacles.push(child);
-                    }
-                }
-            });
-
-            const holeBlocker = new THREE.Mesh(holeGeometry, holeMaterial);
-            holeBlocker.position.set(x, y + (floorHeight / 2), z);
-            scene.add(holeBlocker);
-            obstacles.push(holeBlocker); 
+    corpseModel.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            child.name = "corpse_part"; 
         }
-    }
+    });
+
+    loader.load("./babel_final.glb", function(glb) {
+        const roomModel = glb.scene;
+        const box = new THREE.Box3().setFromObject(roomModel);
+        const size = box.getSize(new THREE.Vector3());
+        
+        const floorHeight = size.y * 0.95; 
+        const gapTweak = 0.98; 
+        roomSpacingX = size.x * gapTweak; 
+        
+        const holeRadius = size.x * 0.1; 
+        const holeGeometry = new THREE.CylinderGeometry(holeRadius, holeRadius, floorHeight, 16);
+        const holeMaterial = new THREE.MeshBasicMaterial({ visible: false }); 
+
+        for (let floor = -3; floor <= 3; floor++) {     
+            for (let i = -3; i <= 3; i++) {             
+                const clone = roomModel.clone();
+                const x = i * roomSpacingX;
+                const y = floor * floorHeight;
+                const z = 0; 
+                clone.position.set(x, y, z);
+                scene.add(clone);
+
+                if (floor === 0 && Math.random() < 1.0) {
+                    const cClone = corpseModel.clone();
+                    cClone.position.set(x, 0.01, z); 
+                    scene.add(cClone);
+                    clickableCorpses.push(cClone);
+                }
+
+                clone.traverse((child) => {
+                    if (child.isLight) { child.intensity = 0; }
+                    if (child.isMesh) {
+                        const meshName = child.name.toLowerCase();
+                        child.castShadow = true;    
+                        child.receiveShadow = true; 
+                        if (targetNames.some(target => meshName.includes(target))) {
+                            child.material.side = THREE.DoubleSide; 
+                            obstacles.push(child);
+                        }
+                    }
+                });
+
+                const holeBlocker = new THREE.Mesh(holeGeometry, holeMaterial);
+                holeBlocker.position.set(x, y + (floorHeight / 2), z);
+                scene.add(holeBlocker);
+                obstacles.push(holeBlocker); 
+            }
+        }
+    });
 });
 
-// 조이스틱
+// ------------------------------------------
+// 입력 감지 (키보드 및 조이스틱)
+// ------------------------------------------
 const keys = { w: false, a: false, s: false, d: false };
 window.addEventListener('keydown', (e) => { keys[e.key] = true; });
 window.addEventListener('keyup', (e) => { keys[e.key] = false; });
@@ -199,9 +245,11 @@ window.addEventListener("resize", () => {
     renderer.setSize(sizes.width, sizes.height);
 });
 
-
+// ------------------------------------------
+// 이동 및 물리 로직
+// ------------------------------------------
 const raycaster = new THREE.Raycaster();
-const speed = 0.02; // 이동 속도 컴에선 빠른데 모바일에선 느림.. 0.02가 딱인듯?
+const speed = 0.02; 
 const collisionDistance = 0.1; 
 
 function animate() {
@@ -217,7 +265,6 @@ function animate() {
     if (keys.s) moveDir.sub(forward);
     if (keys.d) moveDir.add(right);
     if (keys.a) moveDir.sub(right);
-
 
     if (joystickVector.y !== 0) moveDir.addScaledVector(forward, joystickVector.y);
     if (joystickVector.x !== 0) moveDir.addScaledVector(right, joystickVector.x);
@@ -246,15 +293,16 @@ function animate() {
         }
     }
 
-// 무한 텔레포트 treadmilll
     if (roomSpacingX > 0) {
         if (camera.position.x > roomSpacingX / 2) {
             camera.position.x -= roomSpacingX;
             controls.target.x -= roomSpacingX;
+            clickableCorpses.forEach(c => c.position.x -= roomSpacingX);
         } 
         else if (camera.position.x < -roomSpacingX / 2) {
             camera.position.x += roomSpacingX;
             controls.target.x += roomSpacingX;
+            clickableCorpses.forEach(c => c.position.x += roomSpacingX);
         }
     }
 
@@ -264,7 +312,9 @@ function animate() {
 }
 animate();
 
-
+// ------------------------------------------
+// 검색 시스템 로직
+// ------------------------------------------
 const searchOverlay = document.getElementById('search-overlay');
 const searchInput = document.getElementById('search-input');
 const searchBtn = document.getElementById('search-btn');
